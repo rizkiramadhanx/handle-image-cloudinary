@@ -8,7 +8,7 @@ router.route("/test").get((req, res) => {
   res.send("anjay");
 });
 router.route("/all").get(getAll);
-router.route("/user").post(upload.single("gambar"), addUser);
+router.route("/user").post([upload.single("gambar")], addUser);
 
 // router.delete("/user");
 // router.put("/user");
