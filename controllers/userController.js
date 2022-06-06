@@ -21,10 +21,38 @@ export const addUser = (req, res) => {
     async function (err, user) {
       if (err) return res.send(err);
       const result = await cloudinary.uploader.upload(req.file.path, {
-        public_id: `recipes/${user._id}`,
+        public_id: "recipes/" + req.file.path.replace(/\\/g, "/").split("/")[1],
         crop: "fill",
       });
       res.status(200).json({ data: { user, result } });
     }
   );
+};
+
+export const deleteUser = (req, res) => {
+  const username = req.body.username;
+  if (!username) return res.send("ngapain bang !");
+
+  User.findOne({ username: username }, async function (err, user) {
+    if (!user) return res.send("user tidak ditemukan");
+
+    cloudinary.uploader.destroy("recipes/" + user.photo, function (err, cb) {
+      if (cb.result === "not found")
+        return res.json("image cloudinary belum terhapus");
+      User.deleteOne(
+        {
+          id: user._id,
+        },
+        (err, cb) => {
+          if (err) return res.json({ message: "Data belum dihapus" });
+          return res.json({ message: "Data berhasil dihapus" });
+        }
+      );
+    });
+  });
+};
+
+export const editUser = (req, res) => {
+  const username = req.body.username;
+  if (!username) return res.send("ngapain bang !");
 };
