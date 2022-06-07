@@ -2,7 +2,7 @@ import path from "path";
 import multer from "multer";
 
 const multerStorage = multer.diskStorage({
-  destination: "images",
+  // destination: "images",
   filename: (req, file, cb) => {
     const extension = file.mimetype.split("/")[1];
     const currentTime = new Date();

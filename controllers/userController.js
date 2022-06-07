@@ -16,12 +16,14 @@ export const addUser = (req, res) => {
   User.create(
     {
       username: req.body.username,
-      photo: req.file.path.replace(/\\/g, "/").split("/")[1],
+      photo: req.file.path.replace(/\\/g, "/").split("/").slice(-1)[0],
     },
     async function (err, user) {
       if (err) return res.send(err);
       const result = await cloudinary.uploader.upload(req.file.path, {
-        public_id: "recipes/" + req.file.path.replace(/\\/g, "/").split("/")[1],
+        public_id:
+          "recipes/" +
+          req.file.path.replace(/\\/g, "/").split("/").slice(-1)[0],
         crop: "fill",
       });
       res.status(200).json({ data: { user, result } });
@@ -53,6 +55,42 @@ export const deleteUser = (req, res) => {
 };
 
 export const editUser = (req, res) => {
+  const userId = req.params.userId;
+  const photoPath = req.file.path.replace(/\\/g, "/").split("/").slice(-1)[0];
   const username = req.body.username;
+
   if (!username) return res.send("ngapain bang !");
+
+  User.findOne({ _id: userId }, async function (err, user) {
+    if (!user) return res.send("user tidak ditemukan");
+
+    if (req.file) {
+      cloudinary.uploader.destroy(
+        "recipes/" + user.photo,
+        async function (err, cb) {
+          if (cb.result === "not found")
+            return res.json("image cloudinary belum terhapus");
+          cloudinary.uploader.upload(
+            req.file.path,
+            {
+              public_id: "recipes/" + photoPath,
+              crop: "fill",
+            },
+            function () {
+              User.findByIdAndUpdate(
+                user._id,
+                {
+                  username: username,
+                  photo: photoPath,
+                },
+                function () {
+                  res.status(200).json({ message: "Data sudaha diupdate" });
+                }
+              );
+            }
+          );
+        }
+      );
+    }
+  });
 };
